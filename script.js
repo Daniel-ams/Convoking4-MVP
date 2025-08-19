@@ -1,9 +1,9 @@
 // Convoking4 Organizational Snapshot Assessment
-// Version: 8.0
+// Version: 8.1
 // Date: August 19, 2025
 
 (function() {
-    const APP_VERSION = '8.0';
+    const APP_VERSION = '8.1';
     const appContainer = document.getElementById('app-container');
     let form, currentContext;
 
@@ -165,7 +165,6 @@
                     createTextField("headwind", "What is the #1 thing that is not working and you should stop doing? (Your biggest headwind)", "", 3, "momentum.headwind"),
                 ]
             },
-            // --- SECTIONS 6-8 RESTORED BELOW ---
             {
                 title: "Section 6: Past Performance & Lessons", id: "section-history", path: "strategicHistory",
                 description: "Reflect on past events to inform future strategy. Your history contains your most valuable lessons.",
@@ -254,7 +253,7 @@
         });
 
         repopulateForm(initialData);
-        loadStateFromLocalStorage();
+        loadStateFromLocalStorage(initialData);
     };
 
     let isDirty = false;
@@ -289,6 +288,7 @@
 
     const gatherFormData = () => {
         const data = { metadata: { version: APP_VERSION, generatedAt: new Date().toISOString() } };
+        if (!form) return data;
         form.querySelectorAll('[data-path]').forEach(el => {
             const path = el.dataset.path;
             if (el.type === 'radio') {
@@ -372,12 +372,12 @@
         }
     };
 
-    const loadStateFromLocalStorage = () => {
+    const loadStateFromLocalStorage = (initialData) => {
         const savedData = localStorage.getItem('convoking4_autosave');
         if (savedData) {
             try {
                 const data = JSON.parse(savedData);
-                if (form && data.identity && data.identity.archetype === initialData.identity.archetype) {
+                if (form && data.identity && initialData.identity && data.identity.archetype === initialData.identity.archetype) {
                      repopulateForm(data);
                      showNotification('Unsaved progress from a previous session has been restored.', 'info');
                 } else {
