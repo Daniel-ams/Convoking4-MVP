@@ -103,6 +103,7 @@ label.main-label {
 
 input[type="text"], 
 input[type="number"], 
+input[type="range"],
 select, 
 textarea { 
     width: 100%; 
@@ -466,4 +467,21 @@ textarea {
 .modal-footer .btn-primary { 
     background-color: var(--brand-secondary); 
     color: white; 
+}
+
+/* --- NEW STYLES ADDED --- */
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+.confidence-slider {
+    flex-grow: 1;
+    /* Resetting some default padding for range inputs */
+    padding: 0;
+}
+.slider-label {
+    font-size: 0.85em;
+    color: #6c757d;
 }
