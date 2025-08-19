@@ -1,9 +1,9 @@
 // Convoking4 Organizational Snapshot Assessment
-// Version: 7.0
+// Version: 7.1 (Enhanced Input)
 // Date: August 19, 2025
 
 (function() {
-    const APP_VERSION = '7.0';
+    const APP_VERSION = '7.1';
     const form = document.getElementById('profile-form');
     const formContainer = document.getElementById('dynamic-form-content');
     const navLinksContainer = document.getElementById('nav-links-container');
@@ -89,6 +89,19 @@
                     <select id="${id}" data-path="${path}">
                         ${optionsHTML}
                     </select>
+                </div>`;
+    };
+    
+    // --- NEW SLIDER FUNCTION ---
+    const createSlider = (id, title, description, path, minLabel = 'Low', maxLabel = 'High') => {
+        return `<div class="form-group">
+                    <label for="${id}" class="main-label">${title}</label>
+                    ${description ? `<p class="description">${description}</p>` : ''}
+                    <div class="slider-container">
+                        <span class="slider-label">${minLabel}</span>
+                        <input type="range" id="${id}" min="1" max="10" value="5" class="confidence-slider" data-path="${path}">
+                        <span class="slider-label">${maxLabel}</span>
+                    </div>
                 </div>`;
     };
     
@@ -191,16 +204,17 @@
                          <p class="description" style="margin-bottom: 20px;">For your top 2 competitors, complete the following:</p>
                          ${createInputField('comp1-name', 'Competitor 1 Name:', '', 'customerAndMarket.competitiveLandscape.competitor1.name')}
                          ${createTextField('comp1-diff', 'Their Key Differentiator:', 2, 'customerAndMarket.competitiveLandscape.competitor1.differentiator', '(Why customers choose them)')}
-                         ${createTextField('comp1-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor1.weakness', '(Where are they vulnerable?)')}
+                         ${createTextField('comp1-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor1.weakness', '(Where are they vulnerable?')}
                          <hr style="margin: 25px 0;">
                          ${createInputField('comp2-name', 'Competitor 2 Name:', '', 'customerAndMarket.competitiveLandscape.competitor2.name')}
                          ${createTextField('comp2-diff', 'Their Key Differentiator:', 2, 'customerAndMarket.competitiveLandscape.competitor2.differentiator', '(Why customers choose them)')}
-                         ${createTextField('comp2-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor2.weakness', '(Where are they vulnerable?)')}
+                         ${createTextField('comp2-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor2.weakness', '(Where are they vulnerable?')}
                     </div>
-                </div>`
+                </div>`,
+                // --- NEW SLIDER ADDED HERE ---
+                createSlider("customer-confidence", "4.5 Confidence in This Section", "How confident are you in your assessment of the customer and market? This helps the AI understand where there might be uncertainty.", "customerAndMarket.confidenceScore", "Very Uncertain", "Very Confident")
             ]
         },
-        // Sections 5, 6, 7, 8, 9 remain the same as before...
         {
             title: "Section 5: Operations & Culture", id: "section-operations", path: "operationsAndCulture", isCritical: true,
             description: "Evaluate your internal workings—what you offer, how you decide, and how you manage risk.",
@@ -234,6 +248,8 @@
                 createMultiChoice("failure-pattern", "Was this an isolated event or part of a recurring pattern?", "", "radio", [{label: "Isolated Event"}, {label: "Recurring Pattern"}], "strategicHistory.pastFailuresPattern"),
                 createTextField("past-successes", "6.2 Analyze a Past Success", "Describe a significant past success. What was the key factor that made it successful?", 4, "strategicHistory.pastSuccesses", "Example: Partnering with local businesses boosted our user adoption by 300%. Factor: Strategic alliances provided credibility and access to new customers."),
                 createMultiChoice("success-pattern", "Was this an isolated event or part of a recurring pattern?", "", "radio", [{label: "Isolated Event"}, {label: "Recurring Pattern"}], "strategicHistory.pastSuccessesPattern"),
+                // --- NEW FIELD ADDED HERE ---
+                createTextField("past-attempts", "6.3 What Have You Already Tried to Solve This Problem?", "Briefly list any previous attempts or solutions that were considered or implemented and why they didn't work. This helps avoid repeating past mistakes.", 4, "strategicHistory.pastAttempts")
             ]
         },
         {
@@ -320,6 +336,8 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
             ], 'summary.strategicTradeoff.choice')}
             ${createTextField('tradeoff-explanation', 'Explanation:', 2, 'summary.strategicTradeoff.explanation')}
         </div>
+        
+        ${createTextField("constraints", "Non-Negotiable Constraints", "What are the hard limits or boundaries for any potential solution? (e.g., 'Must be completed by Q4,' 'Budget cannot exceed $50k,' 'Cannot hire new staff.')", 4, "summary.constraints")}
     `;
     formHtml.push(strategicTradeoffHTML);
     navHtml.push(`<li><a href="#section-summary"><span class="nav-highlight">Priorities</span></a></li>`);
@@ -361,7 +379,7 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
             localStorage.removeItem('convoking4_autosave');
             form.reset();
             // Manually clear any fields that form.reset() might miss, and update UI
-            document.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
+            document.querySelectorAll('input[type="number"], input[type="range"]').forEach(input => input.value = '');
             handleArchetypeChange(); 
             updateGoalsSummary();
             showNotification('Form cleared. You can start a new assessment.', 'success');
@@ -629,27 +647,15 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
     const selectPromptButton = document.getElementById('select-prompt-button');
     const closeModalButtons = document.querySelectorAll('#close-modal-button-top, #close-modal-button-bottom');
     
+    // --- UPDATED AI PROMPT GENERATION ---
     const generateAIPrompt = () => {
         const allData = gatherFormData();
         const orgData = { ...allData };
         delete orgData.userContext;
         const userContext = allData.userContext || {};
         const relationship = userContext.relationship ? userContext.relationship.join(', ') : '';
-        const infoFormat = userContext.informationFormat ? userContext.informationFormat.join(', ') : '';
         const analyticalLanguage = userContext.analyticalLanguage ? userContext.analyticalLanguage.join(', ') : '';
         
-        const fieldMapping = {};
-        form.querySelectorAll('[data-path]').forEach(el => {
-            const path = el.dataset.path;
-            const formGroup = el.closest('.form-group');
-            if (formGroup) {
-                const label = formGroup.querySelector('.main-label, .subsection-title');
-                if (label && !fieldMapping[path]) {
-                     fieldMapping[path] = label.textContent;
-                }
-            }
-        });
-
         const promptTemplate = `
 [1.0 PERSONA & PRIME DIRECTIVE]
 You are an AI Organizational Strategist, functioning as a fractional Chief Strategy Officer. Your analysis must adapt to the organization’s sector and type, ensuring relevance to its unique context. Your prime directive is to provide a comprehensive, actionable, and unbiased strategic advisory that is explicitly aligned with the user’s stated strategic objective and the organization’s mission, vision, and values.
@@ -672,6 +678,17 @@ ${JSON.stringify(orgData, null, 2)}
 [2.5 USER CONTEXT PROFILE (FROM QUESTIONNAIRE)]
 My Relationship to the Organization: "${relationship || 'Not specified.'}"
 My Top Two Analytical 'Languages': "${analyticalLanguage || "Not specified."}"
+
+[2.6 USER'S QUALITATIVE ASSESSMENT & CONTEXT]
+// This section contains the user's self-assessed confidence and real-world constraints. Pay close attention to this, as it provides crucial context that is not in the primary data. A recommendation that ignores these constraints is not a valid recommendation.
+
+Overall Confidence in Customer/Market Assessment (1-10 scale): ${allData.customerAndMarket?.confidenceScore || "Not specified."}
+Non-Negotiable Constraints: """
+${allData.summary?.constraints || "None specified."}
+"""
+Past Attempts to Solve This Problem That Failed: """
+${allData.strategicHistory?.pastAttempts || "None specified."}
+"""
 
 [3.0 CORE DIRECTIVES: ANALYSIS & MODELING]
 (Instructions from previous prompt are assumed here for brevity)
