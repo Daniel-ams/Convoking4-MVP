@@ -1,14 +1,15 @@
 // Convoking4 Organizational Snapshot Assessment
-// Version: 6.15
+// Version: 7.0
 // Date: August 19, 2025
 
 (function() {
-    const APP_VERSION = '6.15';
+    const APP_VERSION = '7.0';
     const form = document.getElementById('profile-form');
     const formContainer = document.getElementById('dynamic-form-content');
     const navLinksContainer = document.getElementById('nav-links-container');
     const finalContainer = document.getElementById('questionnaire-and-validation-container');
     const saveButton = document.getElementById('generate-button');
+    const clearButton = document.getElementById('clear-form-button');
     const topBar = document.querySelector('.top-bar');
     let scrollMarginStyleElement = null;
     let isDirty = false;
@@ -144,10 +145,12 @@
                 ], "identity.legalStructure"),
                 `<div class="subsection-container conditional-field" data-show-for="For-Profit Business,Hybrid Organization,Investor/Financial Firm">
                     <label class="main-label">Financial Health Snapshot (Optional for For-Profit businesses)</label>
+                    <p class="description">Please provide metrics for a consistent time-frame (e.g., trailing 6 months).</p>
                     ${createInputField("burn-rate", "Monthly Burn Rate (USD)", "", "identity.financials.monthlyBurnRate", "", "number", {placeholder: "e.g., 50000"})}
                     ${createInputField("runway", "Cash Runway (Months)", "", "identity.financials.cashRunwayMonths", "", "number", {placeholder: "e.g., 18"})}
                     ${createInputField("margin", "Gross Margin (%)", "", "identity.financials.grossMargin", "", "number", {placeholder: "e.g., 75"})}
                     ${createInputField("cac", "Customer Acquisition Cost (CAC, USD)", "", "identity.financials.customerAcquisitionCost", "", "number", {placeholder: "e.g., 500"})}
+                    ${createInputField("ltv", "Customer Lifetime Value (LTV, USD)", "", "identity.financials.customerLifetimeValue", "", "number", {placeholder: "e.g., 2000"})}
                 </div>`,
                 createMultiChoice("org-size", "2.4 Organization Size (People)", "Based on employees, members, or active participants.", "radio", [
                     {label: "Micro (<10)"}, {label: "Small (10–50)"}, {label: "Medium (51–200)"}, {label: "Large (>200)"}, {label: "Uncertain"}
@@ -163,6 +166,7 @@
                 createTextField("mission", "3.1 Mission Statement", "Your 'Why'. What is your organization's core purpose?", 2, "strategicFoundation.mission", "Example: To deliver accessible, tech-enabled healthcare to our community."),
                 createTextField("vision", "3.2 Vision Statement", "Your 'Where'. What is the future you aim to create?", 2, "strategicFoundation.vision", "Example: To be the leading digital credit union in our region."),
                 createTextField("values", "3.3 Core Values", "Your 'How'. List up to 5 principles that guide your behavior.", 3, "strategicFoundation.values", "Example: Innovation, Efficiency, Sustainability, Collaboration, Quality."),
+                createTextField("north-star", "3.4 North Star Metric", "What is the single most important metric that measures the value you deliver to your customers?", 2, "strategicFoundation.northStarMetric", `Example: For Slack, it might be "Daily Active Users." For an e-commerce site, "Number of repeat purchases per month." For Convoking4, it could be "Number of key decisions successfully executed by clients."`),
             ]
         },
         {
@@ -183,11 +187,20 @@
                         ], "customerAndMarket.competitiveLandscape.marketDynamics", true)}
                     </div>
                     <div class="subsection-container">
-                        ${createTextField('key-competitors', 'b. Key Competitors', 'List your top 1-3 competitors. For each, what is the primary reason a customer would choose them over you?', 4, "customerAndMarket.competitiveLandscape.keyCompetitors", "Example: BigBank (Reason: Customers trust their established brand and feel their money is safer).")}
+                         <label class="subsection-title">b. Competitive Matrix</label>
+                         <p class="description" style="margin-bottom: 20px;">For your top 2 competitors, complete the following:</p>
+                         ${createInputField('comp1-name', 'Competitor 1 Name:', '', 'customerAndMarket.competitiveLandscape.competitor1.name')}
+                         ${createTextField('comp1-diff', 'Their Key Differentiator:', 2, 'customerAndMarket.competitiveLandscape.competitor1.differentiator', '(Why customers choose them)')}
+                         ${createTextField('comp1-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor1.weakness', '(Where are they vulnerable?)')}
+                         <hr style="margin: 25px 0;">
+                         ${createInputField('comp2-name', 'Competitor 2 Name:', '', 'customerAndMarket.competitiveLandscape.competitor2.name')}
+                         ${createTextField('comp2-diff', 'Their Key Differentiator:', 2, 'customerAndMarket.competitiveLandscape.competitor2.differentiator', '(Why customers choose them)')}
+                         ${createTextField('comp2-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor2.weakness', '(Where are they vulnerable?)')}
                     </div>
                 </div>`
             ]
         },
+        // Sections 5, 6, 7, 8, 9 remain the same as before...
         {
             title: "Section 5: Operations & Culture", id: "section-operations", path: "operationsAndCulture", isCritical: true,
             description: "Evaluate your internal workings—what you offer, how you decide, and how you manage risk.",
@@ -292,7 +305,23 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
     
     // Add final, non-data sections
     formHtml.push(`<h2 id="section-summary">Section 10: Strategic Priorities & Tensions</h2> <p class="section-explanation">This section provides a consolidated view of your changes and goals, and asks you to identify the central strategic challenge.</p> <div id="goals-summary-container"><p>You haven't noted any changes or goals yet. Fill in the fields above to see a summary here.</p></div>`);
-    formHtml.push(createTextField('strategic-tension', "What is the single biggest tension or conflict between your goals?", "Strategy is about making trade-offs. Identifying your core tension is the most critical step.", 3, "summary.strategicTension", "Example: We want to rapidly innovate new products, but we are also constrained by a tight budget."));
+    
+    // --- New Strategic Trade-Off Section ---
+    const strategicTradeoffHTML = `
+        <div class="form-group">
+            <label class="main-label">Primary Strategic Trade-Off</label>
+            <p class="description">Strategy is about what you choose not to do. What is the primary trade-off your organization is currently facing? Select one and briefly explain.</p>
+            ${createMultiChoice('strategic-tradeoff', '', '', 'radio', [
+                {label: 'Speed vs. Quality', description: 'e.g., "We need to ship features faster, but our quality is suffering."'},
+                {label: 'Growth vs. Profitability', description: 'e.g., "We are spending heavily on marketing to grow, but our burn rate is too high."'},
+                {label: 'Innovation vs. Core Business', description: 'e.g., "We are focused on our existing customers, but risk being disrupted by new technology."'},
+                {label: 'Flexibility vs. Scalability', description: 'e.g., "We customize solutions for every client, which prevents us from creating a scalable process."'},
+                {label: 'Other'}
+            ], 'summary.strategicTradeoff.choice')}
+            ${createTextField('tradeoff-explanation', 'Explanation:', 2, 'summary.strategicTradeoff.explanation')}
+        </div>
+    `;
+    formHtml.push(strategicTradeoffHTML);
     navHtml.push(`<li><a href="#section-summary"><span class="nav-highlight">Priorities</span></a></li>`);
     
     formHtml.push(`<h2 id="section-comments">Section 11: Final Comments</h2> <fieldset>${createTextField("comments-box", "", "Use this field to provide any additional context or explain any 'Uncertain' selections.", 10, "comments.additionalContext")}</fieldset>`);
@@ -327,6 +356,19 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
     };
     finalContainer.innerHTML = buildQuestionnaireHtml();
 
+    const clearForm = () => {
+        if (confirm("Are you sure you want to clear all fields and start a new assessment? This action cannot be undone.")) {
+            localStorage.removeItem('convoking4_autosave');
+            form.reset();
+            // Manually clear any fields that form.reset() might miss, and update UI
+            document.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
+            handleArchetypeChange(); 
+            updateGoalsSummary();
+            showNotification('Form cleared. You can start a new assessment.', 'success');
+            window.scrollTo(0, 0);
+        }
+    };
+    
     const handleArchetypeChange = () => {
         const selectedArchetype = form.querySelector('input[name="org-archetype"]:checked')?.value;
         const conditionalFields = form.querySelectorAll('.conditional-field');
@@ -338,7 +380,8 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
             } else {
                 field.classList.remove('visible');
                 field.querySelectorAll('input, select, textarea').forEach(input => {
-                    if (input.type === 'radio' || input.type === 'checkbox') input.checked = false;
+                    if(input.type !== 'radio' && input.type !== 'checkbox') input.value = '';
+                    else input.checked = false;
                 });
             }
         });
@@ -377,6 +420,7 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
 
     const updateGoalsSummary = () => {
         const container = document.getElementById('goals-summary-container');
+        if (!container) return;
         container.innerHTML = '';
         const currentData = gatherFormData();
         let contentFound = false;
@@ -455,7 +499,7 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
                     const currentVal = getValueFromPath(data, path);
                     if (!currentVal.includes(el.value)) currentVal.push(el.value);
                 }
-            } else if (el.value) {
+            } else if (el.value || el.type !== 'radio' && el.type !== 'checkbox') {
                 set(data, path, el.value);
             }
         });
@@ -498,6 +542,8 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
                     const rankIndex = rankedValues.indexOf(input.dataset.rankValue);
                     if (rankIndex !== -1) {
                         input.value = rankIndex + 1;
+                    } else {
+                        input.value = '';
                     }
                 });
             }
@@ -636,7 +682,9 @@ My Top Two Analytical 'Languages': "${analyticalLanguage || "Not specified."}"
         return promptTemplate.trim();
     };
     
-    consultAiButton.addEventListener('click', () => { aiPromptOutput.value = generateAIPrompt(); aiPromptModal.showModal(); });
+    if (consultAiButton) {
+        consultAiButton.addEventListener('click', () => { aiPromptOutput.value = generateAIPrompt(); aiPromptModal.showModal(); });
+    }
     closeModalButtons.forEach(button => button.addEventListener('click', () => aiPromptModal.close()));
     
     selectPromptButton.addEventListener('click', () => {
@@ -652,6 +700,7 @@ My Top Two Analytical 'Languages': "${analyticalLanguage || "Not specified."}"
     });
     
     function updateScrollMargin() {
+        if (!topBar) return;
         const headerHeight = topBar.getBoundingClientRect().height;
         const marginValue = Math.ceil(headerHeight) + 20;
 
@@ -673,7 +722,8 @@ My Top Two Analytical 'Languages': "${analyticalLanguage || "Not specified."}"
     // --- Initial Setup and Event Listeners ---
     document.getElementById('version-display').textContent = `Version ${APP_VERSION}`;
     document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    saveButton.addEventListener('click', saveProfileToFile);
+    if (saveButton) saveButton.addEventListener('click', saveProfileToFile);
+    if (clearButton) clearButton.addEventListener('click', clearForm);
     document.getElementById('progress-file-loader').addEventListener('change', loadProfileFromFile);
     
     form.addEventListener('submit', (event) => event.preventDefault());
