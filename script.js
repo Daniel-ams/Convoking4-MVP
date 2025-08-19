@@ -92,7 +92,6 @@
                 </div>`;
     };
     
-    // --- NEW SLIDER FUNCTION ---
     const createSlider = (id, title, description, path, minLabel = 'Low', maxLabel = 'High') => {
         return `<div class="form-group">
                     <label for="${id}" class="main-label">${title}</label>
@@ -211,7 +210,6 @@
                          ${createTextField('comp2-weak', 'Their Perceived Weakness:', 2, 'customerAndMarket.competitiveLandscape.competitor2.weakness', '(Where are they vulnerable?')}
                     </div>
                 </div>`,
-                // --- NEW SLIDER ADDED HERE ---
                 createSlider("customer-confidence", "4.5 Confidence in This Section", "How confident are you in your assessment of the customer and market? This helps the AI understand where there might be uncertainty.", "customerAndMarket.confidenceScore", "Very Uncertain", "Very Confident")
             ]
         },
@@ -248,7 +246,6 @@
                 createMultiChoice("failure-pattern", "Was this an isolated event or part of a recurring pattern?", "", "radio", [{label: "Isolated Event"}, {label: "Recurring Pattern"}], "strategicHistory.pastFailuresPattern"),
                 createTextField("past-successes", "6.2 Analyze a Past Success", "Describe a significant past success. What was the key factor that made it successful?", 4, "strategicHistory.pastSuccesses", "Example: Partnering with local businesses boosted our user adoption by 300%. Factor: Strategic alliances provided credibility and access to new customers."),
                 createMultiChoice("success-pattern", "Was this an isolated event or part of a recurring pattern?", "", "radio", [{label: "Isolated Event"}, {label: "Recurring Pattern"}], "strategicHistory.pastSuccessesPattern"),
-                // --- NEW FIELD ADDED HERE ---
                 createTextField("past-attempts", "6.3 What Have You Already Tried to Solve This Problem?", "Briefly list any previous attempts or solutions that were considered or implemented and why they didn't work. This helps avoid repeating past mistakes.", 4, "strategicHistory.pastAttempts")
             ]
         },
@@ -319,10 +316,8 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
         navHtml.push(`<li><a href="#${section.id}">${section.title.split(':')[1].trim()}</a></li>`);
     });
     
-    // Add final, non-data sections
     formHtml.push(`<h2 id="section-summary">Section 10: Strategic Priorities & Tensions</h2> <p class="section-explanation">This section provides a consolidated view of your changes and goals, and asks you to identify the central strategic challenge.</p> <div id="goals-summary-container"><p>You haven't noted any changes or goals yet. Fill in the fields above to see a summary here.</p></div>`);
     
-    // --- New Strategic Trade-Off Section ---
     const strategicTradeoffHTML = `
         <div class="form-group">
             <label class="main-label">Primary Strategic Trade-Off</label>
@@ -378,7 +373,6 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
         if (confirm("Are you sure you want to clear all fields and start a new assessment? This action cannot be undone.")) {
             localStorage.removeItem('convoking4_autosave');
             form.reset();
-            // Manually clear any fields that form.reset() might miss, and update UI
             document.querySelectorAll('input[type="number"], input[type="range"]').forEach(input => input.value = '');
             handleArchetypeChange(); 
             updateGoalsSummary();
@@ -640,14 +634,12 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
         event.target.value = null;
     };
 
-    // --- AI Prompt Modal Logic ---
     const consultAiButton = document.querySelector('#consult-ai-button');
     const aiPromptModal = document.getElementById('ai-prompt-modal');
     const aiPromptOutput = document.getElementById('ai-prompt-output');
     const selectPromptButton = document.getElementById('select-prompt-button');
     const closeModalButtons = document.querySelectorAll('#close-modal-button-top, #close-modal-button-bottom');
     
-    // --- UPDATED AI PROMPT GENERATION ---
     const generateAIPrompt = () => {
         const allData = gatherFormData();
         const orgData = { ...allData };
