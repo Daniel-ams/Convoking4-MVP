@@ -3,51 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
     <title>Convoking4™ - Organizational Snapshot</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="top-bar">
-             <div class="top-bar-controls">
-                 <div class="top-bar-info">
-                     <span class="info-label">Date:</span>
-                     <span id="current-date"></span>
-                     <span class="info-label" id="version-display"></span>
-                 </div>
-                 <div class="top-bar-actions">
-                    <button type="button" id="clear-form-button" class="button-label">Clear & Start New</button>
-                    <label for="progress-file-loader" class="button-label">Load Profile from File</label>
-                </div>
-             </div>
-             <ul class="nav-links" id="nav-links-container">
-             </ul>
+    <div class="container" id="app-container">
         </div>
-
-        <div class="header">
-            <h1 class="logo-title">Convoking<span class="logo-red">4</span>™</h1>
-            <p class="tagline">Understand. Align. Decide. Thrive.</p>
-        </div>
-        
-        <main>
-            <h1 class="form-title">Organizational Snapshot Assessment</h1>
-            <p class="description" style="text-align: center; max-width: 600px; margin: auto; margin-bottom: 20px;">This assessment gives a quick, clear picture of an organization's identity, operations, and strategic setup at a certain time. It helps stakeholders and AI assistants understand the organization's purpose, structure, and activities for planning, comparing, communicating, or making decisions.</p>
-
-            <form id="profile-form">
-                <div id="dynamic-form-content"></div>
-                
-                <div id="questionnaire-and-validation-container">
-                </div>
-                
-                <p class="description" style="text-align: center; font-size: 0.8em; margin-top: 20px;">
-                    Note: Your progress is automatically saved in your browser's local storage for your convenience. This data is not sent anywhere.
-                </p>
-
-                <button id="generate-button" class="btn">Save Profile to File (.json)</button>
-            </form>
-        </main>
-    </div>
     
     <div id="notification-banner"></div>
     <input type="file" id="progress-file-loader" style="display:none" accept=".json">
