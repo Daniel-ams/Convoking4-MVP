@@ -1,9 +1,9 @@
 // Convoking4 Organizational Snapshot Assessment
-// Version: 8.1
+// Version: 9.0
 // Date: August 19, 2025
 
 (function() {
-    const APP_VERSION = '8.1';
+    const APP_VERSION = '9.0';
     const appContainer = document.getElementById('app-container');
     let form, currentContext;
 
@@ -89,6 +89,16 @@
                     <div class="${type}-group">${optionsHTML}</div>
                 </div>`;
     };
+     const createSelectField = (id, title, description, path, options) => {
+        let optionsHTML = options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
+        return `<div class="form-group">
+                    <label for="${id}" class="main-label">${title}</label>
+                    ${description ? `<p class="description">${description}</p>` : ''}
+                    <select id="${id}" data-path="${path}">
+                        ${optionsHTML}
+                    </select>
+                </div>`;
+    };
 
     // --- STAGE 1: RENDER INITIAL QUESTIONNAIRE ---
     const renderInitialQuestionnaire = () => {
@@ -133,10 +143,25 @@
                 parts: [
                     createInputField("org-name", "1.1 Organization Name", "", "basicIdentifiers.organizationName"),
                     createInputField("org-year", "1.2 Year Founded", "", "basicIdentifiers.yearFormed", "", "number"),
+                    createInputField("org-city", "1.3 Primary City", "", "basicIdentifiers.city"),
+                    createInputField("org-country", "1.4 Primary Country", "", "basicIdentifiers.country"),
                 ]
             },
             {
-                title: `Section 2: ${currentContext.kpiSectionTitle}`, id: "section-kpis", path: "kpis", isCritical: true,
+                title: `Section 2: Organizational Identity`, id: "section-identity", path: "identity",
+                parts: [
+                    createMultiChoice("legal-structure", "2.1 Legal Structure", "What is your organization's legal form?", "radio", [
+                        {label: "LLC (Limited Liability Company)"}, {label: "Corporation (C-Corp/S-Corp)"},
+                        {label: "Nonprofit/NGO"}, {label: "Sole Proprietorship"}, {label: "Partnership"},
+                        {label: "B-Corp/Hybrid"}, {label: "Cooperative"}, {label: "Pre-Formal/Informal"}, {label: "Uncertain"}
+                    ], "identity.legalStructure"),
+                    createMultiChoice("org-size", "2.2 Organization Size (People)", "Based on employees, members, or active participants.", "radio", [
+                        {label: "Micro (<10)"}, {label: "Small (10–50)"}, {label: "Medium (51–200)"}, {label: "Large (>200)"}, {label: "Uncertain"}
+                    ], "identity.size"),
+                ]
+            },
+            {
+                title: `Section 3: ${currentContext.kpiSectionTitle}`, id: "section-kpis", path: "kpis", isCritical: true,
                 description: "Strategy without data is speculation. Provide a few core metrics to create a quantitative baseline for the entire analysis.",
                 parts: [
                     createTextField("financial-kpis", "Financial Metrics", "List 2-3 of your most important financial health indicators.", 3, "kpis.financial", `Example: ${currentContext.financialKpis}`),
@@ -144,49 +169,65 @@
                 ]
             },
             {
-                title: `Section 3: ${currentContext.missionVisionLabel}`, id: "section-strategy", path: "strategicFoundation", isCritical: true,
+                title: `Section 4: ${currentContext.missionVisionLabel}`, id: "section-strategy", path: "strategicFoundation", isCritical: true,
                 parts: [
-                    createTextField("mission", "3.1 Mission Statement", "Your 'Why'. What is your organization's core purpose?", 2, "strategicFoundation.mission"),
-                    createTextField("values", "3.2 Core Values & Associated Behaviors", "For each of your core values, describe a specific, recent example of how the organization lived (or failed to live) that value.", 5, "strategicFoundation.values", "Example: Value: 'Customer Obsession'. Behavior: 'An engineer stayed up all night to fix a single customer's critical bug before a major deadline.'"),
+                    createTextField("mission", "4.1 Mission Statement", "Your 'Why'. What is your organization's core purpose?", 2, "strategicFoundation.mission"),
+                    createTextField("values", "4.2 Core Values & Associated Behaviors", "For each of your core values, describe a specific, recent example of how the organization lived (or failed to live) that value.", 5, "strategicFoundation.values", "Example: Value: 'Customer Obsession'. Behavior: 'An engineer stayed up all night to fix a single customer's critical bug before a major deadline.'"),
                 ]
             },
             {
-                title: `Section 4: ${currentContext.customerLabel} & Market`, id: "section-customer", path: "customerAndMarket", isCritical: true,
+                title: `Section 5: ${currentContext.customerLabel} & Market`, id: "section-customer", path: "customerAndMarket", isCritical: true,
                 parts: [
-                    createTextField("job-to-be-done", `4.1 ${currentContext.customerLabel}'s Job To Be Done (JTBD)`, 'Use the framework: "When [situation], I want to [motivation], so I can [expected outcome]."', 4, "customerAndMarket.jobToBeDone", `Example: "When I'm planning our family reunion (situation), I want to easily collect and track payments (motivation), so I can avoid chasing people for money and focus on the fun parts (outcome)."`),
-                    createTextField('team-capabilities', `4.2 Team Capabilities: Evidence & Impact`, "Strength: What is your team's single greatest strength? Provide one piece of evidence. Gap: What is the most critical skill/role gap? Describe the direct business impact of this gap.", 4, "operationsAndCulture.teamCapabilities", "Example: Strength: Rapid Prototyping. Evidence: We went from idea to live MVP in 3 weeks. Gap: Senior marketing leadership. Impact: Our product is great but we're failing to generate qualified leads, stalling growth."),
+                    createTextField("job-to-be-done", `5.1 ${currentContext.customerLabel}'s Job To Be Done (JTBD)`, 'Use the framework: "When [situation], I want to [motivation], so I can [expected outcome]."', 4, "customerAndMarket.jobToBeDone", `Example: "When I'm planning our family reunion (situation), I want to easily collect and track payments (motivation), so I can avoid chasing people for money and focus on the fun parts (outcome)."`),
+                    createTextField('team-capabilities', `5.2 Team Capabilities: Evidence & Impact`, "Strength: What is your team's single greatest strength? Provide one piece of evidence. Gap: What is the most critical skill/role gap? Describe the direct business impact of this gap.", 4, "operationsAndCulture.teamCapabilities", "Example: Strength: Rapid Prototyping. Evidence: We went from idea to live MVP in 3 weeks. Gap: Senior marketing leadership. Impact: Our product is great but we're failing to generate qualified leads, stalling growth."),
                 ]
             },
             {
-                title: "Section 5: Strategic Momentum", id: "section-momentum", path: "momentum", isCritical: true,
+                title: "Section 6: Strategic Momentum", id: "section-momentum", path: "momentum", isCritical: true,
                 description: "This captures your organization's dynamics—what's working and what isn't. It's often a more honest indicator of health than a static SWOT analysis.",
                 parts: [
-                    createTextField("tailwind", "What is the #1 thing that is working well and you should do more of? (Your biggest tailwind)", "", 3, "momentum.tailwind"),
-                    createTextField("headwind", "What is the #1 thing that is not working and you should stop doing? (Your biggest headwind)", "", 3, "momentum.headwind"),
+                    createTextField("tailwind", "6.1 What is the #1 thing that is working well and you should do more of? (Your biggest tailwind)", "", 3, "momentum.tailwind"),
+                    createTextField("headwind", "6.2 What is the #1 thing that is not working and you should stop doing? (Your biggest headwind)", "", 3, "momentum.headwind"),
                 ]
             },
             {
-                title: "Section 6: Past Performance & Lessons", id: "section-history", path: "strategicHistory",
-                description: "Reflect on past events to inform future strategy. Your history contains your most valuable lessons.",
+                title: "Section 7: Operations & Culture", id: "section-operations", path: "operationsAndCulture",
                 parts: [
-                    createTextField("past-failures", "6.1 Analyze a Past Failure", "Describe a significant past failure or setback. What was the primary lesson learned?", 4, "strategicHistory.pastFailures", "Example: Our first telehealth app launch failed due to poor user onboarding. Lesson: Involve real users in testing from day one."),
-                    createMultiChoice("failure-pattern", "Was this an isolated event or part of a recurring pattern?", "", "radio", [{label: "Isolated Event"}, {label: "Recurring Pattern"}], "strategicHistory.pastFailuresPattern"),
-                    createTextField("past-successes", "6.2 Analyze a Past Success", "Describe a significant past success. What was the key factor that made it successful?", 4, "strategicHistory.pastSuccesses", "Example: Partnering with local businesses boosted our user adoption by 300%. Factor: Strategic alliances provided credibility and access to new customers."),
-                    createMultiChoice("success-pattern", "Was this an isolated event or part of a recurring pattern?", "", "radio", [{label: "Isolated Event"}, {label: "Recurring Pattern"}], "strategicHistory.pastSuccessesPattern"),
+                    createMultiChoice("primary-offering", "7.1 Primary Offering", "What is the main product or service you provide?", "radio", [
+                        {label: "Physical Product"}, {label: "Digital Product"}, {label: "Service"}, {label: "Platform/Marketplace"}, {label: "Hybrid (Product & Service)"}, {label: "Uncertain"}
+                    ], "operationsAndCulture.primaryOffering"),
+                    createMultiChoice("decision-style", "7.2 Decision-Making Style", "How are major decisions typically made?", "radio", [
+                        {label: "Top-Down (by leadership)"}, {label: "Consensus-Based (group agreement)"}, {label: "Data-Driven (based on analytics)"}, {label: "Individual Autonomy (by experts)"}, {label: "Hybrid"}, {label: "Uncertain"}
+                    ], "operationsAndCulture.decisionStyle"),
+                    createSelectField("risk-appetite", "7.3 Risk Appetite", "How would you rate your organization's willingness to take risks?", "operationsAndCulture.riskAppetite", [
+                        {value: "", label: "Select a rating..."},
+                        {value: "3", label: "3 - Averse (We prioritize stability)"},
+                        {value: "5", label: "5 - Calculated (We take risks with clear potential return)"},
+                        {value: "7", label: "7 - Seeking (We pursue high-growth opportunities)"},
+                        {value: "10", label: "10 - Aggressive (We believe playing it safe is the biggest risk)"},
+                    ]),
                 ]
             },
             {
-                title: `Section 7: ${currentContext.competitiveLandscapeLabel}`, id: "section-ecosystem", path: "ecosystem",
-                description: "Evaluate the external and internal forces that impact your organization. No strategy exists in a vacuum.",
+                title: "Section 8: Past Performance & Lessons", id: "section-history", path: "strategicHistory",
+                description: "Reflect on past events to inform future strategy.",
                 parts: [
-                     createMultiChoice('market-dynamics', 'Market Dynamics', '', 'radio', [
+                    createTextField("past-failures", "8.1 Analyze a Past Failure", "Describe a significant past failure or setback. What was the primary lesson learned?", 4, "strategicHistory.pastFailures"),
+                    createTextField("past-successes", "8.2 Analyze a Past Success", "Describe a significant past success. What was the key factor that made it successful?", 4, "strategicHistory.pastSuccesses"),
+                ]
+            },
+             {
+                title: `Section 9: ${currentContext.competitiveLandscapeLabel}`, id: "section-ecosystem", path: "ecosystem",
+                description: "Evaluate the external and internal forces that impact your organization.",
+                parts: [
+                     createMultiChoice('market-dynamics', '9.1 Market Dynamics', '', 'radio', [
                             {label: "Dominant Leader"}, {label: "Oligopoly (A few major players)"}, {label: "Fragmented (Many small players)"}, {label: "Emerging (New market)"}
                         ], "customerAndMarket.competitiveLandscape.marketDynamics"),
-                    createTextField('key-competitors', 'Key Competitors / Peers', 'List your top 1-3 competitors or peer groups. Why might someone choose them over you?', 4, "customerAndMarket.competitiveLandscape.keyCompetitors", "Example: BigBank (Reason: Customers trust their established brand). For internal divisions: 'The data science division often gets more budget because their ROI is easier to prove.'")
+                    createTextField('key-competitors', '9.2 Key Competitors / Peers', 'List your top 1-3 competitors or peer groups. Why might someone choose them over you?', 4, "customerAndMarket.competitiveLandscape.keyCompetitors", "Example: BigBank (Reason: Customers trust their brand). For internal divisions: 'The data science division gets more budget because their ROI is easier to prove.'")
                 ]
             },
             {
-                title: "Section 8: Final Context", id: "section-final-context", path: "finalContext",
+                title: "Section 10: Final Context", id: "section-final-context", path: "finalContext",
                 parts: [
                      createTextField("comments-box", "Is there any other critical context or nuance an outside advisor must know to understand your situation?", "Use this field to explain any 'Uncertain' selections or provide additional details.", 8, "comments.additionalContext")
                 ]
