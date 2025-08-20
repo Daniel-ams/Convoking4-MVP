@@ -1,9 +1,9 @@
 // Convoking4 Organizational Snapshot Assessment
-// Version: 7.1 (Enhanced Input)
+// Version: 7.2 (Semantic & AI Prompt Enhancements)
 // Date: August 19, 2025
 
 (function() {
-    const APP_VERSION = '7.1';
+    const APP_VERSION = '7.2';
     const form = document.getElementById('profile-form');
     const formContainer = document.getElementById('dynamic-form-content');
     const navLinksContainer = document.getElementById('nav-links-container');
@@ -177,7 +177,8 @@
             parts: [
                 createTextField("mission", "3.1 Mission Statement", "Your 'Why'. What is your organization's core purpose?", 2, "strategicFoundation.mission", "Example: To deliver accessible, tech-enabled healthcare to our community."),
                 createTextField("vision", "3.2 Vision Statement", "Your 'Where'. What is the future you aim to create?", 2, "strategicFoundation.vision", "Example: To be the leading digital credit union in our region."),
-                createTextField("values", "3.3 Core Values", "Your 'How'. List up to 5 principles that guide your behavior.", 3, "strategicFoundation.values", "Example: Innovation, Efficiency, Sustainability, Collaboration, Quality."),
+                // --- SEMANTIC IMPROVEMENT 1 ---
+                createTextField("values", "3.3 Core Values & a Recent Example", "For one of your core values, describe a specific, recent example of how the team lived (or failed to live) that value.", 4, "strategicFoundation.valuesAndBehaviors", "Example: Value: Customer Obsession. Behavior: An engineer stayed up all night to fix a single customer's critical bug."),
                 createTextField("north-star", "3.4 North Star Metric", "What is the single most important metric that measures the value you deliver to your customers?", 2, "strategicFoundation.northStarMetric", `Example: For Slack, it might be "Daily Active Users." For an e-commerce site, "Number of repeat purchases per month." For Convoking4, it could be "Number of key decisions successfully executed by clients."`),
             ]
         },
@@ -258,6 +259,8 @@
                 createMultiChoice("key-dependencies", "7.1 Key External Dependencies", "Select all external factors your organization relies on to function.", "checkbox", [
                     {label: "Key Suppliers/Vendors"}, {label: "Technology Platforms"}, {label: "Regulatory Approval"}, {label: "Community/User Engagement"}, {label: "Strategic Partners"}, {label: "Access to Capital"}, {label: "Uncertain"}
                 ], "ecosystem.keyDependencies"),
+                // --- SEMANTIC IMPROVEMENT 2 ---
+                createInputField("critical-dependency", "Of the dependencies you selected, which one is the MOST critical to your survival?", "Identifying the single most critical factor helps focus the strategic analysis.", "ecosystem.mostCriticalDependency", "Example: Access to Capital"),
                 createRankedChoice("external-forces", "7.2 External Trends", "Rank the following trends from most (1) to least impactful on your organization.", [
                     {label: "Competitive & Partner Dynamics"}, {label: "Shifting Customer Behavior"}, {label: "Technological Disruption"}, {label: "Regulatory & Geopolitical Instability"}
                 ], "ecosystem.externalForcesRanked"),
@@ -642,6 +645,7 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
     
     const generateAIPrompt = () => {
         const allData = gatherFormData();
+        const orgName = allData.basicIdentifiers?.organizationName || 'the Organization';
         const orgData = { ...allData };
         delete orgData.userContext;
         const userContext = allData.userContext || {};
@@ -650,10 +654,10 @@ Quote: "I don't care if it's perfect, I need new features to sell now."`)
         
         const promptTemplate = `
 [1.0 PERSONA & PRIME DIRECTIVE]
-You are an AI Organizational Strategist, functioning as a fractional Chief Strategy Officer. Your analysis must adapt to the organization’s sector and type, ensuring relevance to its unique context. Your prime directive is to provide a comprehensive, actionable, and unbiased strategic advisory that is explicitly aligned with the user’s stated strategic objective and the organization’s mission, vision, and values.
+You are an AI Organizational Strategist, functioning as a fractional Chief Strategy Officer. Your analysis must adapt to the organization’s sector and type, ensuring relevance to its unique context. Your prime directive is to create a shared understanding of the organization's current situation. You must be constraints-solution agnostic in your initial analysis. Your goal is to diagnose the inputs, identify gaps and misalignments, and provide feedback to improve the snapshot *before* offering strategic solutions. **You must prioritize the user's stated \`[1.5 STRATEGIC OBJECTIVE]\` and qualitative feedback in \`[2.6]\` as the primary lens through which all other data is interpreted.** A recommendation that is misaligned with these inputs is an invalid response.
 
 [1.1 BIAS & BLIND SPOT ANALYSIS]
-A critical part of your analysis is to identify the user's potential blind spots. The user has selected their primary analytical 'languages' (e.g., "Financial", "Customer-Centric"). You MUST analyze their strategy from the perspectives of the languages they **did not** select. For example, if they selected 'Customer-Centric' and 'Strategic', you should deliberately stress-test their plan from a 'Financial' and 'Operational' lens in your 'Bias and Misalignment Check' sections, looking for what they might have missed.
+A critical part of your analysis is to identify the user's potential blind spots. The user has selected their primary analytical 'languages' (e.g., "Financial", "Customer-Centric"). You MUST analyze their strategy from the perspectives of the languages they **did not** select. For example, if they selected 'Customer-Centric' and 'Strategic', you should deliberately stress-test their plan from a 'Financial' and 'Operational' lens.
 
 [1.5 STRATEGIC OBJECTIVE / THE 'WHY']
 My Goal: "${userContext.strategicGoal || "Not specified. Assume the goal is to identify the highest-impact strategic priorities for the next 12-18 months."}"
@@ -672,8 +676,6 @@ My Relationship to the Organization: "${relationship || 'Not specified.'}"
 My Top Two Analytical 'Languages': "${analyticalLanguage || "Not specified."}"
 
 [2.6 USER'S QUALITATIVE ASSESSMENT & CONTEXT]
-// This section contains the user's self-assessed confidence and real-world constraints. Pay close attention to this, as it provides crucial context that is not in the primary data. A recommendation that ignores these constraints is not a valid recommendation.
-
 Overall Confidence in Customer/Market Assessment (1-10 scale): ${allData.customerAndMarket?.confidenceScore || "Not specified."}
 Non-Negotiable Constraints: """
 ${allData.summary?.constraints || "None specified."}
@@ -681,12 +683,65 @@ ${allData.summary?.constraints || "None specified."}
 Past Attempts to Solve This Problem That Failed: """
 ${allData.strategicHistory?.pastAttempts || "None specified."}
 """
+Most Critical External Dependency: "${allData.ecosystem?.mostCriticalDependency || "Not specified."}"
 
 [3.0 CORE DIRECTIVES: ANALYSIS & MODELING]
-(Instructions from previous prompt are assumed here for brevity)
+// Follow these steps in your internal 'thinking' process before generating the report.
+3.1: **Situational Synthesis:** First, read and synthesize all provided data to form a holistic understanding of the organization's identity, strategy, challenges, and goals.
+3.2: **Inconsistency & Gap Detection:** Actively search for contradictions, gaps, or misalignments between different sections. For example:
+    - Do the Core Values & Behaviors (Section 3) align with the described Past Successes/Failures (Section 6)?
+    - Do the Team Strengths & Gaps (Section 5) support the stated Strategic Goals (Section 10)?
+    - Does the Risk Appetite (Section 5) conflict with the Non-Negotiable Constraints (Section 10)?
+3.3: **Recommendation Formulation:** Based on your analysis, formulate specific, constructive suggestions for each section of the input. The goal of these suggestions is to help the user strengthen the clarity, depth, and alignment of their snapshot.
 
 [4.0 OUTPUT PROTOCOL]
-(Instructions from previous prompt are assumed here for brevity)
+// Generate a report with the following structure precisely. Use markdown for formatting.
+
+# Strategic Snapshot Diagnostic & Analysis for ${orgName}
+
+## Part 1: Executive Summary
+(Provide a concise, high-level summary of the organization's current situation based on the provided snapshot. Highlight the most critical challenge or tension you've identified.)
+
+---
+
+## Part 2: Situational Analysis
+### 2.1 Core Identity & Strategic Intent
+(Summarize the organization's mission, market position, and core strategy. What are they trying to achieve?)
+
+### 2.2 Key Strengths & Tailwinds
+(Based on the input, what are the most significant strengths, assets, or positive momentum points? Reference specific inputs.)
+
+### 2.3 Critical Vulnerabilities & Headwinds
+(Based on the input, what are the most significant gaps, risks, or negative patterns? Pay special attention to the user's stated "Past Failures.")
+
+---
+
+## Part 3: Diagnostic Deep Dive
+### 3.1 Inconsistency & Misalignment Report
+(List the top 3-5 most significant inconsistencies or misalignments you detected. Present this as a list.)
+* **Inconsistency 1:** e.g., "There is a misalignment between the stated **Core Value** of 'Innovation' and the **Past Failure** analysis, which describes a recurring pattern of rejecting new ideas."
+* **Inconsistency 2:** e.g., "The **Strategic Goal** to 'enter the European market' seems at odds with the described **Team Gap** of 'lacking international marketing experience.'"
+
+### 3.2 Bias and Blind Spot Assessment
+(Based on the user's selected 'analytical languages,' identify the primary blind spot and analyze the snapshot from that perspective as instructed in section 1.1.)
+
+---
+
+## Part 4: Recommendations for Improving Your Snapshot
+(Provide section-by-section feedback to help the user improve their inputs. For each section with a suggestion, use the following format exactly.)
+
+**Section 3: Core Strategy**
+* **Current Input:** "The North Star Metric is 'Number of High-Stakes Decisions Committed to Execution.'"
+* **Analysis & Suggestions:** "This is a strong, output-focused metric. To improve clarity, consider defining what qualifies as a 'High-Stakes Decision' and how 'Committed to Execution' is measured. This will make the metric more tangible and trackable."
+
+**Section 5: Operations & Culture**
+* **Current Input:** "Team Strengths & Gaps describes a gap in marketing leadership."
+* **Analysis & Suggestions:** "This aligns with the recurring failure in VC pitches. To strengthen this section, quantify the business impact of this gap. For example: 'This has resulted in a 90% reliance on founder-led sales, which is not scalable and is a key risk noted by investors.'"
+
+---
+
+## Part 5: Strategic Synthesis & Path Forward
+(Conclude with a summary of the key themes from this analysis. Frame the findings as the foundational "shared understanding" needed to move into the next phase of strategic planning. Suggest 2-3 critical questions the team should discuss based on your findings.)
 `;
         return promptTemplate.trim();
     };
